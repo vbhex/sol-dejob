@@ -349,7 +349,6 @@ contract Escrow is IEscrow, Ownable {
             //send ERC20 to this contract
             buyCoinContract.transferFrom(_msgSender(), address(this), amount);
         }
-        address seller = productContract.getProdOwner(productId);
         maxOrderId = maxOrderId.add(1);
         // store order information
         Order memory _order;
@@ -357,7 +356,7 @@ contract Escrow is IEscrow, Ownable {
         _order.coinAddress = coinAddress;
         _order.amount = amount;
         _order.buyer = _msgSender();
-        _order.seller = seller;
+        _order.seller = productContract.getProdOwner(productId);
         _order.productId = productId;
         _order.createdTime = block.timestamp;
         _order.claimTime = block.timestamp.add(appIntervalClaim[appId]);
@@ -371,9 +370,9 @@ contract Escrow is IEscrow, Ownable {
             appOrderId,
             coinAddress,
             amount,
-            _msgSender(),
-            seller,
             productId,
+            _msgSender(),
+            productContract.getProdOwner(productId),
             appId,
             modAId
         );
