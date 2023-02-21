@@ -70,6 +70,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 amount; //order amount
         address coinAddress; //coin contract address
         address buyer; //buyer address
+        uint256 productId; // product id
         address seller; //seller address
         uint256 createdTime; //order created timestamp
         uint256 claimTime; //timestamp after when seller can claim if there is no dispute
@@ -108,6 +109,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 indexed appOrderId,
         address indexed coinAddress,
         uint256 amount,
+        uint256 productId,
         address buyer,
         address seller,
         uint256 appId,
@@ -166,9 +168,12 @@ contract Escrow is IEscrow, Ownable {
         uint256 orderId
     );
 
-    constructor(address _modAddress) payable {
+    constructor(address _modAddress, address _prodAddress) payable {
             moderatorAddress    =   _modAddress;
             moderatorContract   =  IModerator(_modAddress);
+
+            productAddress      =   _prodAddress;
+            productContract     =   IProduct(_prodAddress);
 
     }
 
@@ -321,7 +326,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 appId,
         uint256 amount,
         address coinAddress,
-        address seller,
+        uint256 productId,
         uint256 appOrderId,
         uint256 modAId
     ) public payable returns (uint256) {
@@ -344,6 +349,7 @@ contract Escrow is IEscrow, Ownable {
             //send ERC20 to this contract
             buyCoinContract.transferFrom(_msgSender(), address(this), amount);
         }
+        address seller = productContract.getProdOwner(productId);
         maxOrderId = maxOrderId.add(1);
         // store order information
         Order memory _order;
@@ -352,6 +358,7 @@ contract Escrow is IEscrow, Ownable {
         _order.amount = amount;
         _order.buyer = _msgSender();
         _order.seller = seller;
+        _order.productId = productId;
         _order.createdTime = block.timestamp;
         _order.claimTime = block.timestamp.add(appIntervalClaim[appId]);
         _order.status = uint8(1);
@@ -366,6 +373,7 @@ contract Escrow is IEscrow, Ownable {
             amount,
             _msgSender(),
             seller,
+            productId,
             appId,
             modAId
         );
@@ -405,6 +413,9 @@ contract Escrow is IEscrow, Ownable {
 
         // set order status to completed
         orderBook[orderId].status == uint8(3);
+
+        // update product sold
+        productContract.updateProdScore(orderBook[orderId].productId, true);
 
         //emit event
         emit ConfirmDone(orderBook[orderId].appId, orderId);
@@ -939,6 +950,8 @@ contract Escrow is IEscrow, Ownable {
                     orderId
                 );
             }
+            // update product sold
+            productContract.updateProdScore(orderBook[orderId].productId, false);
             emit ResolvedFinally(orderBook[orderId].appId, orderId, uint8(1));
         } else {
             // send all the amount to the seller
@@ -959,6 +972,8 @@ contract Escrow is IEscrow, Ownable {
                 orderBook[orderId].appId,
                 orderId
             );
+            // update product sold
+            productContract.updateProdScore(orderBook[orderId].productId, true);
             emit ResolvedFinally(orderBook[orderId].appId, orderId, uint8(0));
         }
     }
