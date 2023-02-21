@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./IEscrow.sol";
 import "./IModerator.sol";
+import "./IProduct.sol";
 
 contract Escrow is IEscrow, Ownable {
     using SafeMath for uint256;
@@ -13,6 +14,10 @@ contract Escrow is IEscrow, Ownable {
     address public moderatorAddress;
 
     IModerator moderatorContract;
+
+    // product contract
+    address public productAddress;
+    IProduct productContract;
 
 
     // total app num
