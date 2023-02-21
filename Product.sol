@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./IEscrow.sol";
 import "./IProduct.sol";
 
-contract Product is IProduct,ERC721,ERC721Enumerable,Ownable {
+contract Product is IProduct,ERC721A,Ownable {
     using SafeMath for uint256;
     // max supply
     uint256 public maxSupply = 140000; 
@@ -37,25 +36,25 @@ contract Product is IProduct,ERC721,ERC721Enumerable,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721("Dejob Product", "PROD")  {
+    constructor()  ERC721A("Dejob Product", "PROD")  {
 
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,/* firstTokenId */
-        uint256 batchSize
-    )
-    internal
-    override(ERC721, ERC721Enumerable)
-    {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
+    // function _beforeTokenTransfer(
+    //     address from,
+    //     address to,
+    //     uint256 tokenId,/* firstTokenId */
+    //     uint256 batchSize
+    // )
+    // internal
+    // override(ERC721, ERC721Enumerable)
+    // {
+    //     super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    // }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
+    // function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
+    //     return super.supportsInterface(interfaceId);
+    // }
 
     // function baseTokenURI() public pure returns (string memory) {
     //     return "https://savechives.com/rest/V1/vc/mod/id/";
@@ -81,16 +80,10 @@ contract Product is IProduct,ERC721,ERC721Enumerable,Ownable {
     }
 
     // mint a new product
-    function mint() public onlyOwner {
-        uint256 tokenId                     = super.totalSupply().add(1);
+    function mint(uint256 quantity) public onlyOwner payable {
+        uint256 tokenId                     = super.totalSupply().add(quantity);
         require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
-        _safeMint(_msgSender(), tokenId);
-        // set default product sold quantity
-        prodTotalSold[tokenId]   =   0;  
-        // emit mint event
-        emit Mint(
-            tokenId
-        );
+        _mint(msg.sender, quantity);
     }
 
     // get product's total supply
