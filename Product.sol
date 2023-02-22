@@ -22,6 +22,9 @@ contract Product is IProduct,ERC721A,Ownable {
     // product's success rate
     mapping(uint256 => uint8) public prodSuccessRate;
 
+    // product available status
+    mapping(uint256 => bool) public prodIsBlocked;
+
     // mint event
     event Mint(
         uint256 indexed productId
@@ -40,34 +43,14 @@ contract Product is IProduct,ERC721A,Ownable {
 
     }
 
-    // function _beforeTokenTransfer(
-    //     address from,
-    //     address to,
-    //     uint256 tokenId,/* firstTokenId */
-    //     uint256 batchSize
-    // )
-    // internal
-    // override(ERC721, ERC721Enumerable)
-    // {
-    //     super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    // }
-
-    // function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
-    //     return super.supportsInterface(interfaceId);
-    // }
-
-    // function baseTokenURI() public pure returns (string memory) {
-    //     return "https://savechives.com/rest/V1/vc/mod/id/";
-    // }
-
     function _baseURI() internal view virtual override returns (string memory) {
-        return "https://savechives.com/rest/V1/vc/mod/id/";
+        return "https://dejob.io/api/dejobio/v1/nftproduct/";
     }
 
 
 
     function contractURI() public pure returns (string memory) {
-        return "https://savechives.com/rest/V1/vc/mod/contract/info";
+        return "https://dejob.io/api/dejobio/v1/contract/info";
     }
 
 
@@ -75,7 +58,7 @@ contract Product is IProduct,ERC721A,Ownable {
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
         IEscrow EscrowContract = IEscrow(_escrow);
-        require(EscrowContract.getModAddress()==address(this),'Mod: wrong escrow contract address');
+        require(EscrowContract.getProductAddress()==address(this),'Mod: wrong escrow contract address');
         escrowAddress = _escrow; 
     }
 
@@ -93,8 +76,25 @@ contract Product is IProduct,ERC721A,Ownable {
 
     // get product's owner
     function getProdOwner(uint256 prodId) external view override returns(address) {
-        require(prodId <= super.totalSupply(),'PROD: illegal moderator ID!');
+        require(prodId <= super.totalSupply(),'PROD: illegal product ID!');
         return ownerOf(prodId);
+    }
+
+    // get product's block status
+    function isProductBlocked(uint256 prodId) external view override returns(bool) {
+        require(prodId <= prodId,'PROD: illegal product ID');
+    }
+
+    // block product
+    function blockProduct(uint256 productId) public onlyOwner {
+        require(productId <= totalSupply()&&!prodIsBlocked[productId],'PROD: wrong product id ');
+        prodIsBlocked[productId] = true;
+    }
+
+    // unblock product
+    function unblockProduct(uint256 productId) public onlyOwner {
+        require(productId <= totalSupply()&&prodIsBlocked[productId],'PROD: wrong product id ');
+        prodIsBlocked[productId] = false;
     }
 
     // update product's sold score

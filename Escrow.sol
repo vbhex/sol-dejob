@@ -187,6 +187,11 @@ contract Escrow is IEscrow, Ownable {
         return moderatorAddress;
     }
 
+    function getProductAddress() external view override returns (address)
+    {
+        return productAddress;
+    }
+
     // get total apps quantity
     function getTotalAppsQuantity() public view returns (uint256) {
         return maxAppNum;
@@ -337,6 +342,8 @@ contract Escrow is IEscrow, Ownable {
                 amount > 0,
                 "Escrow: all the ids should be bigger than 0"
         );
+        // Product should not be blocked
+        require(!productContract.isProductBlocked(productId),"product should not be blocked");
         //Mod Id should be validated
         require(modAId <= moderatorContract.getMaxModId(), "Escrow: mod id is too big");
         //Native Currency
