@@ -11,7 +11,7 @@ import "./IProduct.sol";
 contract Product is IProduct,ERC721A,Ownable {
     using SafeMath for uint256;
     // max supply
-    uint256 public maxSupply = 140000; 
+    uint256 public maxSupply = 740000000; 
 
     // product's total sold
     mapping(uint256 => uint256) public prodTotalSold;
@@ -83,6 +83,7 @@ contract Product is IProduct,ERC721A,Ownable {
     // get product's block status
     function isProductBlocked(uint256 prodId) external view override returns(bool) {
         require(prodId <= prodId,'PROD: illegal product ID');
+        return prodIsBlocked[prodId];
     }
 
     // block product
