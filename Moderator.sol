@@ -37,7 +37,7 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721("Dejob Moderator", "MOD")  {
+    constructor()  ERC721("Moderators Of Dejob Escrow", "MOD")  {
 
     }
 

@@ -11,7 +11,7 @@ import "./IProduct.sol";
 contract Product is IProduct,ERC721A,Ownable {
     using SafeMath for uint256;
     // max supply
-    uint256 public maxSupply = 740000000; 
+    uint256 public maxSupply = 74000000; 
 
     // product's total sold
     mapping(uint256 => uint256) public prodTotalSold;
@@ -39,7 +39,7 @@ contract Product is IProduct,ERC721A,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721A("Dejob Product", "PROD")  {
+    constructor()  ERC721A("Marketing Rights Of Dejob Products", "PROD")  {
 
     }
 
@@ -87,13 +87,15 @@ contract Product is IProduct,ERC721A,Ownable {
     }
 
     // block product
-    function blockProduct(uint256 productId) public onlyOwner {
+    function blockProduct(uint256 productId) public {
+        require(ownerOf(productId)==_msgSender(),'PROD: only product owner can block');
         require(productId <= totalSupply()&&!prodIsBlocked[productId],'PROD: wrong product id ');
         prodIsBlocked[productId] = true;
     }
 
     // unblock product
-    function unblockProduct(uint256 productId) public onlyOwner {
+    function unblockProduct(uint256 productId) public {
+        require(ownerOf(productId)==_msgSender(),'PROD: only product owner can block');
         require(productId <= totalSupply()&&prodIsBlocked[productId],'PROD: wrong product id ');
         prodIsBlocked[productId] = false;
     }
