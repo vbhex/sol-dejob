@@ -418,7 +418,7 @@ contract Escrow is IEscrow, Ownable {
         );
 
         // set order status to completed
-        orderBook[orderId].status == uint8(3);
+        orderBook[orderId].status = uint8(3);
 
         // update product sold
         productContract.updateProdScore(orderBook[orderId].productId, true);
