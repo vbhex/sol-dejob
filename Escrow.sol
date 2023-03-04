@@ -429,7 +429,7 @@ contract Escrow is IEscrow, Ownable {
 
     //ask refund
     //triggled by buyer
-    function askRefund(uint256 orderId, uint256 refund, uint256 modBId) public {
+    function askRefund(uint256 orderId, uint256 refund) public {
         require(
             _msgSender() == orderBook[orderId].buyer,
             "Escrow: only buyer can make dispute"
@@ -449,19 +449,14 @@ contract Escrow is IEscrow, Ownable {
         require(refund > 0 && refund <= orderBook[orderId].amount, 
                 "Escrow: refund amount must be bigger than 0 and not bigger than paid amount");
 
-        require(
-            modBId > 0 && modBId <= moderatorContract.getMaxModId(),
-            "Escrow: modB id does not exists"
-        );
-
+        
         // update order status
         if (orderBook[orderId].status == uint8(1)) {
             orderBook[orderId].status = uint8(2);
         }
         // update refund of dispute
         disputeBook[orderId].refund = refund;
-        // update modBId of dispute
-        disputeBook[orderId].modBId = modBId;
+        
         // update refuse expired
         disputeBook[orderId].refuseExpired = block.timestamp.add(appIntervalRefuse[orderBook[orderId].appId]);
         //emit event
@@ -490,7 +485,7 @@ contract Escrow is IEscrow, Ownable {
 
     //refuse refund
     //triggled by seller
-    function refuseRefund(uint256 orderId) public {
+    function refuseRefund(uint256 orderId, uint256 modBId) public {
         require(
             _msgSender() == orderBook[orderId].seller,
             "Escrow: only seller can refuse dispute"
@@ -500,6 +495,14 @@ contract Escrow is IEscrow, Ownable {
             orderBook[orderId].status == uint8(2),
             "Escrow: order status must be equal to refund asked"
         );
+
+        require(
+            modBId > 0 && modBId <= moderatorContract.getMaxModId(),
+            "Escrow: modB id does not exists"
+        );
+
+        // update modBId of dispute
+        disputeBook[orderId].modBId = modBId;
 
         //update order status to refund refused
         orderBook[orderId].status = uint8(4);
