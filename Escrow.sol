@@ -187,11 +187,13 @@ contract Escrow is IEscrow, Ownable {
     // The balance of this contract will be automatically updated.
     receive() external payable {}
 
+    // get Moderator contract address
     function getModAddress() external view override returns (address)
     {
         return moderatorAddress;
     }
 
+    // get Product contract address
     function getProductAddress() external view override returns (address)
     {
         return productAddress;
@@ -202,9 +204,14 @@ contract Escrow is IEscrow, Ownable {
         return maxAppNum;
     }
 
-    // get app owner
+    // get app owner address
     function getAppOwner(uint256 appId) public view returns (address) {
         return appOwner[appId];
+    }
+
+    // get user balance
+    function getUserBalance(address userAddress, address coinAddress) public view returns(uint256) {
+        return userBalance[userAddress][coinAddress];
     }
 
     //Create new APP
@@ -530,7 +537,7 @@ contract Escrow is IEscrow, Ownable {
             "Escrow: order status must be equal to refund refused by seller"
         );
 
-        //update order status to escalate dispute, ready for mods to vote
+        //update order status to escalated dispute, ready for mods to vote
         orderBook[orderId].status = uint8(5);
 
         emit Escalate(orderBook[orderId].appId, orderId);
