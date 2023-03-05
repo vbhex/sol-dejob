@@ -228,7 +228,7 @@ contract Escrow is IEscrow, Ownable {
         appIntervalClaim[appId] = uint256(1000000);
         appIntervalRefuse[appId] = uint256(86400);
         appModCommission[appId] = uint8(1);
-        appOwnerCommission[appId] = uint8(1);
+        appOwnerCommission[appId] = uint8(0);
         maxAppNum = appId;
         emit NewApp(appId);
 
