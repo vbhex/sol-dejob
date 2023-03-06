@@ -53,18 +53,23 @@ contract Product is IProduct,ERC721A,Ownable {
         return "https://dejob.io/api/dejobio/v1/contract/product";
     }
 
+    // override start index to 1
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 1;
+    }
+
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
         IEscrow EscrowContract = IEscrow(_escrow);
-        require(EscrowContract.getProductAddress()==address(this),'Mod: wrong escrow contract address');
+        require(EscrowContract.getProductAddress()==address(this),'PROD: wrong escrow contract address');
         escrowAddress = _escrow; 
     }
 
-    // mint a new product
+    // mint new products
     function mint(uint256 quantity) public onlyOwner payable {
         uint256 tokenId                     = super.totalSupply().add(quantity);
-        require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
+        require(tokenId <= maxSupply, 'PROD: supply reach the max limit!');
         _mint(msg.sender, quantity);
     }
 
@@ -113,7 +118,7 @@ contract Product is IProduct,ERC721A,Ownable {
         } else {
             // nothing changed
         }
-        // recount mod success rate
+        // recount product success rate
         prodSuccessRate[prodId] = uint8(prodSuccessSold[prodId].mul(100).div(prodTotalSold[prodId]));
         // emit event
         emit UpdateSold(

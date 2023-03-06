@@ -50,6 +50,11 @@ contract Moderator is IModerator,ERC721A,Ownable {
         return "https://dejob.io/api/dejobio/v1/contract/mod";
     }
 
+    // override start index to 1
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 1;
+    }
+
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
@@ -58,7 +63,7 @@ contract Moderator is IModerator,ERC721A,Ownable {
         escrowAddress = _escrow; 
     }
 
-    // mint a new product
+    // mint new mods
     function mint(uint256 quantity) public onlyOwner payable {
         uint256 tokenId                     = super.totalSupply().add(quantity);
         require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
