@@ -11,12 +11,12 @@ import "./IProduct.sol";
 contract Escrow is IEscrow, Ownable {
     using SafeMath for uint256;
     //moderator contract
-    address public moderatorAddress;
+    address private moderatorAddress;
 
     IModerator moderatorContract;
 
     // product contract
-    address public productAddress;
+    address private productAddress;
     IProduct productContract;
 
 
@@ -25,41 +25,41 @@ contract Escrow is IEscrow, Ownable {
 
     // app owner
     // appId => address
-    mapping(uint256 => address) public appOwner;
+    mapping(uint256 => address) private appOwner;
 
     //how many seconds after order paid, can buyer make dispute
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalDispute;
+    mapping(uint256 => uint256) private appIntervalDispute;
 
     //how many seconds after order paid, can seller claim order
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalClaim;
+    mapping(uint256 => uint256) private appIntervalClaim;
 
     //how many seconds after dispute made, if seller does not response, buyer can claim the refund
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalRefuse;
+    mapping(uint256 => uint256) private appIntervalRefuse;
 
     // app uri
     // appId => string
-    mapping(uint256 => string) public appURI;
+    mapping(uint256 => string) private appURI;
 
     // app name
     // appId => string
-    mapping(uint256 => string) public appName;
+    mapping(uint256 => string) private appName;
 
     // app mod commission (For each mod and app owner if possible)
-    mapping(uint256 => uint8) public appModCommission;
+    mapping(uint256 => uint8) private appModCommission;
 
     // app owner commission
-    mapping(uint256 => uint8) public appOwnerCommission;
+    mapping(uint256 => uint8) private appOwnerCommission;
 
     // modA resolution for order.
     // orderId => modA resolution : 0 not resolved, 1 agree refund, 2 disagree refund.
-    mapping(uint256 => uint8) public orderModAResolution;
+    mapping(uint256 => uint8) private orderModAResolution;
 
     // modB resolution for order.
     // orderId => modB resolution : 0 not resolved, 1 agree refund, 2 disagree refund.
-    mapping(uint256 => uint8) public orderModBResolution;
+    mapping(uint256 => uint8) private orderModBResolution;
 
     // total order num
     uint256 public maxOrderId;
@@ -75,7 +75,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 createdTime; //order created timestamp
         uint256 claimTime; //timestamp after when seller can claim if there is no dispute
         uint8 status; //order status, 1 paid, 2 buyer ask refund, 3 completed, 4 seller refuse dispute, 5 buyer or seller escalate, so voters can vote
-        uint256 modAId; //the mod that chosen by seller
+        
     }
 
     // orderId => Order
@@ -83,7 +83,8 @@ contract Escrow is IEscrow, Ownable {
     //Struct Dispute
     struct Dispute {
         uint256 refund; // refund amount
-        uint256 modBId; // the mod that chosen by buyer
+        uint256 modAId; //the mod that chosen by buyer
+        uint256 modBId; // the mod that chosen by seller
         uint256 refuseExpired; // after it, if seller does not refuse refund, buyer can claim the refund
     }
 
@@ -91,7 +92,7 @@ contract Escrow is IEscrow, Ownable {
     mapping(uint256 => Dispute) public disputeBook;
 
     // user balance (userAddress => mapping(coinAddress => balance))
-    mapping(address => mapping(address => uint256)) public userBalance;
+    mapping(address => mapping(address => uint256)) private userBalance;
 
     //Withdraw event
     event Withdraw(
@@ -112,8 +113,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 productId,
         address buyer,
         address seller,
-        uint256 appId,
-        uint256 modAId
+        uint256 appId
     );
 
     //Confirm Done event
@@ -123,14 +123,19 @@ contract Escrow is IEscrow, Ownable {
     event AskRefund(
         uint256 indexed appId,
         uint256 indexed orderId,
-        uint256 indexed refund
+        uint256 indexed refund,
+        uint256 modAId
     );
 
     //Cancel refund event
     event CancelRefund(uint256 indexed appId, uint256 indexed orderId);
 
     //Refuse refund event
-    event RefuseRefund(uint256 indexed appId, uint256 indexed orderId);
+    event RefuseRefund(
+        uint256 indexed appId, 
+        uint256 indexed orderId,
+        uint256 indexed modBId
+        );
 
     //Escalate dispute event
     event Escalate(uint256 indexed appId, uint256 indexed orderId);
@@ -182,19 +187,81 @@ contract Escrow is IEscrow, Ownable {
     // The balance of this contract will be automatically updated.
     receive() external payable {}
 
+    // get Moderator contract address
     function getModAddress() external view override returns (address)
     {
         return moderatorAddress;
     }
 
-    // get total apps quantity
-    function getTotalAppsQuantity() public view returns (uint256) {
-        return maxAppNum;
+    // get Product contract address
+    function getProductAddress() external view override returns (address)
+    {
+        return productAddress;
     }
 
-    // get app owner
+    // get app owner address
     function getAppOwner(uint256 appId) public view returns (address) {
         return appOwner[appId];
+    }
+
+    // get app Interval Dispute timestamp
+    function getAppIntervalDispute(uint256 appId) public view returns(uint256) {
+        return appIntervalDispute[appId];
+    }
+
+    // get app Interval Claim timestamp
+    function getAppIntervalClaim(uint256 appId) public view returns(uint256) {
+        return appIntervalClaim[appId];
+    }
+
+    // get app Interval Refuse timestamp
+    function getAppIntervalRefuse(uint256 appId) public view returns(uint256) {
+        return appIntervalRefuse[appId];
+    }
+
+    // get app URI
+    function getAppURI(uint256 appId) public view returns(string memory) {
+        return appURI[appId];
+    }
+
+    // get app Name
+    function getAppName(uint256 appId) public view returns(string memory) {
+        return appName[appId];
+    }
+
+    // get app Mod Commission
+    function getAppModCommission(uint256 appId) public view returns(uint8) {
+        return appModCommission[appId];
+    }
+
+    // get app Owner Commission
+    function getAppOwnerCommission(uint256 appId) public view returns(uint8) {
+        return appOwnerCommission[appId];
+    }
+
+    // get order ModA Resolution
+    function getModAResolution(uint256 orderId) public view returns(uint8) {
+        return orderModAResolution[orderId];
+    }
+
+    // get order ModB Resolution
+    function getModBResolution(uint256 orderId) public view returns(uint8) {
+        return orderModBResolution[orderId];
+    }
+
+    // get user balance
+    function getUserBalance(address userAddress, address coinAddress) public view returns(uint256) {
+        return userBalance[userAddress][coinAddress];
+    }
+
+    // get order detail
+    function getOrderDetail(uint256 orderId) public view returns(Order memory) {
+        return orderBook[orderId];
+    }
+
+    // get dispute detail
+    function getDisputeDetail(uint256 orderId) public view returns(Dispute memory) {
+        return disputeBook[orderId];
     }
 
     //Create new APP
@@ -207,11 +274,11 @@ contract Escrow is IEscrow, Ownable {
         appOwner[appId] = _appOwner;
         appURI[appId] = websiteURI;
         appName[appId] = _appName;
-        appIntervalDispute[appId] = uint256(1000000);
-        appIntervalClaim[appId] = uint256(1000000);
-        appIntervalRefuse[appId] = uint256(86400);
+        appIntervalDispute[appId] = uint256(3000000);// buyer can only dispute in 1 month after order paid.
+        appIntervalClaim[appId] = uint256(3000000);  // seller can claim if buyer does not dispute over 1 month after order paid.
+        appIntervalRefuse[appId] = uint256(259200); // buyer can claim if seller does not refuse dispute over 3 days after dispute .
         appModCommission[appId] = uint8(1);
-        appOwnerCommission[appId] = uint8(1);
+        appOwnerCommission[appId] = uint8(0);
         maxAppNum = appId;
         emit NewApp(appId);
 
@@ -327,8 +394,7 @@ contract Escrow is IEscrow, Ownable {
         uint256 amount,
         address coinAddress,
         uint256 productId,
-        uint256 appOrderId,
-        uint256 modAId
+        uint256 appOrderId
     ) public payable returns (uint256) {
         require(
             appId > 0 &&
@@ -337,8 +403,9 @@ contract Escrow is IEscrow, Ownable {
                 amount > 0,
                 "Escrow: all the ids should be bigger than 0"
         );
-        //Mod Id should be validated
-        require(modAId <= moderatorContract.getMaxModId(), "Escrow: mod id is too big");
+        // Product should not be blocked
+        require(!productContract.isProductBlocked(productId),"product should not be blocked");
+        
         //Native Currency
         if (coinAddress == address(0)) {
             require(msg.value == amount, "Escrow: Wrong amount or wrong value sent");
@@ -361,7 +428,7 @@ contract Escrow is IEscrow, Ownable {
         _order.createdTime = block.timestamp;
         _order.claimTime = block.timestamp.add(appIntervalClaim[appId]);
         _order.status = uint8(1);
-        _order.modAId = modAId;
+        
         orderBook[maxOrderId] = _order;
 
         // emit event
@@ -373,8 +440,7 @@ contract Escrow is IEscrow, Ownable {
             productId,
             _msgSender(),
             productContract.getProdOwner(productId),
-            appId,
-            modAId
+            appId
         );
 
         return maxOrderId;
@@ -411,7 +477,7 @@ contract Escrow is IEscrow, Ownable {
         );
 
         // set order status to completed
-        orderBook[orderId].status == uint8(3);
+        orderBook[orderId].status = uint8(3);
 
         // update product sold
         productContract.updateProdScore(orderBook[orderId].productId, true);
@@ -422,7 +488,7 @@ contract Escrow is IEscrow, Ownable {
 
     //ask refund
     //triggled by buyer
-    function askRefund(uint256 orderId, uint256 refund, uint256 modBId) public {
+    function askRefund(uint256 orderId, uint256 refund, uint256 modAId) public {
         require(
             _msgSender() == orderBook[orderId].buyer,
             "Escrow: only buyer can make dispute"
@@ -442,23 +508,22 @@ contract Escrow is IEscrow, Ownable {
         require(refund > 0 && refund <= orderBook[orderId].amount, 
                 "Escrow: refund amount must be bigger than 0 and not bigger than paid amount");
 
-        require(
-            modBId > 0 && modBId <= moderatorContract.getMaxModId(),
-            "Escrow: modB id does not exists"
-        );
+        //Mod Id should be validated
+        require(modAId <= moderatorContract.getMaxModId(), "Escrow: mod id is too big");
 
-        // update order status
+        // update order status 
         if (orderBook[orderId].status == uint8(1)) {
             orderBook[orderId].status = uint8(2);
         }
+        // update dispute modAId
+        disputeBook[orderId].modAId = modAId;
         // update refund of dispute
         disputeBook[orderId].refund = refund;
-        // update modBId of dispute
-        disputeBook[orderId].modBId = modBId;
+        
         // update refuse expired
         disputeBook[orderId].refuseExpired = block.timestamp.add(appIntervalRefuse[orderBook[orderId].appId]);
         //emit event
-        emit AskRefund(orderBook[orderId].appId, orderId, refund);
+        emit AskRefund(orderBook[orderId].appId, orderId, refund, modAId);
     }
 
     //cancel refund
@@ -483,7 +548,7 @@ contract Escrow is IEscrow, Ownable {
 
     //refuse refund
     //triggled by seller
-    function refuseRefund(uint256 orderId) public {
+    function refuseRefund(uint256 orderId, uint256 modBId) public {
         require(
             _msgSender() == orderBook[orderId].seller,
             "Escrow: only seller can refuse dispute"
@@ -494,10 +559,18 @@ contract Escrow is IEscrow, Ownable {
             "Escrow: order status must be equal to refund asked"
         );
 
+        require(
+            modBId > 0 && modBId <= moderatorContract.getMaxModId(),
+            "Escrow: modB id does not exists"
+        );
+
+        // update modBId of dispute
+        disputeBook[orderId].modBId = modBId;
+
         //update order status to refund refused
         orderBook[orderId].status = uint8(4);
 
-        emit RefuseRefund(orderBook[orderId].appId, orderId);
+        emit RefuseRefund(orderBook[orderId].appId, orderId, modBId);
     }
 
     //escalate, so mods can vote
@@ -514,7 +587,7 @@ contract Escrow is IEscrow, Ownable {
             "Escrow: order status must be equal to refund refused by seller"
         );
 
-        //update order status to escalate dispute, ready for mods to vote
+        //update order status to escalated dispute, ready for mods to vote
         orderBook[orderId].status = uint8(5);
 
         emit Escalate(orderBook[orderId].appId, orderId);
@@ -539,7 +612,7 @@ contract Escrow is IEscrow, Ownable {
                 "Escrow: mod can only vote on dispute escalated status"
             );
             // get the mod's owner wallet address
-            address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
+            address modAWallet = moderatorContract.getModOwner(disputeBook[orderId].modAId);
             address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
             // if modA's owner equal to modB's owner and they are msg sender
             if (
@@ -658,7 +731,7 @@ contract Escrow is IEscrow, Ownable {
             "Escrow: mod can only vote on dispute escalated status"
         );
         // get the mod's owner wallet address
-        address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
+        address modAWallet = moderatorContract.getModOwner(disputeBook[orderId].modAId);
         address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
         // if modA's owner equal to modB's owner and they are msg sender
         if (
@@ -835,7 +908,7 @@ contract Escrow is IEscrow, Ownable {
         uint8 modNum = 1;
         uint8 winResolve = result ? 1 : 2;
         // get the mod's owner wallet address
-        address modAWallet = moderatorContract.getModOwner(orderBook[orderId].modAId);
+        address modAWallet = moderatorContract.getModOwner(disputeBook[orderId].modAId);
         address modBWallet = moderatorContract.getModOwner(disputeBook[orderId].modBId);
         // if modA's owner equal to modB's owner, then just increase 1 success score for the owner
         // and add the mod commission
@@ -844,7 +917,7 @@ contract Escrow is IEscrow, Ownable {
         ) {
             rewardMod(
                 orderId,
-                orderBook[orderId].modAId,
+                disputeBook[orderId].modAId,
                 modAWallet
             );
         }
@@ -866,7 +939,7 @@ contract Escrow is IEscrow, Ownable {
             if (orderModAResolution[orderId] == winResolve) {
                 rewardMod(
                     orderId,
-                    orderBook[orderId].modAId,
+                    disputeBook[orderId].modAId,
                     modAWallet
                 );
                 moderatorContract.updateModScore(disputeBook[orderId].modBId,false);
@@ -876,7 +949,7 @@ contract Escrow is IEscrow, Ownable {
                     disputeBook[orderId].modBId,
                     modBWallet
                 );
-                moderatorContract.updateModScore(orderBook[orderId].modAId,false);
+                moderatorContract.updateModScore(disputeBook[orderId].modAId,false);
             }
         }
         // else if modA agree with modB
@@ -885,7 +958,7 @@ contract Escrow is IEscrow, Ownable {
             modNum = 2;
             rewardMod(
                 orderId,
-                orderBook[orderId].modAId,
+                disputeBook[orderId].modAId,
                 modAWallet
             );
             rewardMod(
@@ -1035,6 +1108,8 @@ contract Escrow is IEscrow, Ownable {
                         100
                     )
                 );
+            // update product sold record
+            productContract.updateProdScore(orderBook[orderId].productId, true);
             emit UserBalanceChanged(
                 orderBook[orderId].seller,
                 true,
@@ -1060,6 +1135,8 @@ contract Escrow is IEscrow, Ownable {
             userBalance[orderBook[orderId].buyer][orderBook[orderId].coinAddress] = 
             userBalance[orderBook[orderId].buyer][orderBook[orderId].coinAddress].add(
                     disputeBook[orderId].refund.mul(100 - finalCommission).div(100));
+            // update product sold record
+            productContract.updateProdScore(orderBook[orderId].productId, false);
             emit UserBalanceChanged(
                 orderBook[orderId].buyer,
                 true,
@@ -1081,6 +1158,7 @@ contract Escrow is IEscrow, Ownable {
                             )
                         ).mul(100 - finalCommission).div(100)
                     );
+                    
                 emit UserBalanceChanged(
                     orderBook[orderId].seller,
                     true,

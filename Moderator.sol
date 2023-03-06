@@ -1,27 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "erc721a/contracts/ERC721A.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./IEscrow.sol";
 import "./IModerator.sol";
 
-contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
+contract Moderator is IModerator,ERC721A,Ownable {
     using SafeMath for uint256;
     // max supply
     uint256 public maxSupply = 140000; 
 
     // mod's total score
-    mapping(uint256 => uint256) public modTotalScore;
+    mapping(uint256 => uint256) private modTotalScore;
 
     // mod's success score
-    mapping(uint256 => uint256) public modSuccessScore;
+    mapping(uint256 => uint256) private modSuccessScore;
 
     // mod's success rate
-    mapping(uint256 => uint8) public modSuccessRate;
+    mapping(uint256 => uint8) private modSuccessRate;
 
     // mint event
     event Mint(
@@ -37,40 +36,39 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
     // escrow contract address
     address payable public escrowAddress;
 
-    constructor()  ERC721("Vbhex Moderator", "MOD")  {
+    constructor()  ERC721A("Moderators Of Dejob Escrow", "MOD")  {
 
     }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,/* firstTokenId */
-        uint256 batchSize
-    )
-    internal
-    override(ERC721, ERC721Enumerable)
-    {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
-    // function baseTokenURI() public pure returns (string memory) {
-    //     return "https://savechives.com/rest/V1/vc/mod/id/";
-    // }
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return "https://savechives.com/rest/V1/vc/mod/id/";
+        return "https://dejob.io/api/dejobio/v1/nftmod/";
     }
 
 
 
     function contractURI() public pure returns (string memory) {
-        return "https://savechives.com/rest/V1/vc/mod/contract/info";
+        return "https://dejob.io/api/dejobio/v1/contract/mod";
     }
 
+    // override start index to 1
+    function _startTokenId() internal view virtual override returns (uint256) {
+        return 1;
+    }
+
+    // get mod total score
+    function getModTotalScore(uint256 modId) public view returns(uint256) {
+        return modTotalScore[modId];
+    }
+
+    // get mod success score
+    function getModSuccessScore(uint256 modId) public view returns(uint256) {
+        return modSuccessScore[modId];
+    }
+
+    // get mod success rate
+    function getModSuccessRate(uint256 modId) public view returns(uint256) {
+        return modSuccessRate[modId];
+    }
 
 
     // set escrow contract address
@@ -80,17 +78,11 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
         escrowAddress = _escrow; 
     }
 
-    // mint a new mod
-    function mint() public onlyOwner {
-        uint256 tokenId                     = super.totalSupply().add(1);
+    // mint new mods
+    function mint(uint256 quantity) public onlyOwner payable {
+        uint256 tokenId                     = super.totalSupply().add(quantity);
         require(tokenId <= maxSupply, 'Mod: supply reach the max limit!');
-        _safeMint(_msgSender(), tokenId);
-        // set default mod score
-        modTotalScore[tokenId]   =   1;  
-        // emit mint event
-        emit Mint(
-            tokenId
-        );
+        _mint(msg.sender, quantity);
     }
 
     // get mod's total supply
@@ -113,8 +105,6 @@ contract Moderator is IModerator,ERC721,ERC721Enumerable,Ownable {
         if(ifSuccess) {
             // success score add 1
             modSuccessScore[modId] = modSuccessScore[modId].add(1);
-        } else if(modSuccessScore[modId] > 0) {
-            modSuccessScore[modId] = modSuccessScore[modId].sub(1);
         } else {
             // nothing changed
         }
