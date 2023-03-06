@@ -11,12 +11,12 @@ import "./IProduct.sol";
 contract Escrow is IEscrow, Ownable {
     using SafeMath for uint256;
     //moderator contract
-    address public moderatorAddress;
+    address private moderatorAddress;
 
     IModerator moderatorContract;
 
     // product contract
-    address public productAddress;
+    address private productAddress;
     IProduct productContract;
 
 
@@ -25,41 +25,41 @@ contract Escrow is IEscrow, Ownable {
 
     // app owner
     // appId => address
-    mapping(uint256 => address) public appOwner;
+    mapping(uint256 => address) private appOwner;
 
     //how many seconds after order paid, can buyer make dispute
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalDispute;
+    mapping(uint256 => uint256) private appIntervalDispute;
 
     //how many seconds after order paid, can seller claim order
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalClaim;
+    mapping(uint256 => uint256) private appIntervalClaim;
 
     //how many seconds after dispute made, if seller does not response, buyer can claim the refund
     // appId => interval
-    mapping(uint256 => uint256) public appIntervalRefuse;
+    mapping(uint256 => uint256) private appIntervalRefuse;
 
     // app uri
     // appId => string
-    mapping(uint256 => string) public appURI;
+    mapping(uint256 => string) private appURI;
 
     // app name
     // appId => string
-    mapping(uint256 => string) public appName;
+    mapping(uint256 => string) private appName;
 
     // app mod commission (For each mod and app owner if possible)
-    mapping(uint256 => uint8) public appModCommission;
+    mapping(uint256 => uint8) private appModCommission;
 
     // app owner commission
-    mapping(uint256 => uint8) public appOwnerCommission;
+    mapping(uint256 => uint8) private appOwnerCommission;
 
     // modA resolution for order.
     // orderId => modA resolution : 0 not resolved, 1 agree refund, 2 disagree refund.
-    mapping(uint256 => uint8) public orderModAResolution;
+    mapping(uint256 => uint8) private orderModAResolution;
 
     // modB resolution for order.
     // orderId => modB resolution : 0 not resolved, 1 agree refund, 2 disagree refund.
-    mapping(uint256 => uint8) public orderModBResolution;
+    mapping(uint256 => uint8) private orderModBResolution;
 
     // total order num
     uint256 public maxOrderId;
@@ -79,7 +79,7 @@ contract Escrow is IEscrow, Ownable {
     }
 
     // orderId => Order
-    mapping(uint256 => Order) public orderBook;
+    mapping(uint256 => Order) private orderBook;
     //Struct Dispute
     struct Dispute {
         uint256 refund; // refund amount
@@ -89,10 +89,10 @@ contract Escrow is IEscrow, Ownable {
     }
 
     // orderId => Dispute
-    mapping(uint256 => Dispute) public disputeBook;
+    mapping(uint256 => Dispute) private disputeBook;
 
     // user balance (userAddress => mapping(coinAddress => balance))
-    mapping(address => mapping(address => uint256)) public userBalance;
+    mapping(address => mapping(address => uint256)) private userBalance;
 
     //Withdraw event
     event Withdraw(
@@ -199,19 +199,69 @@ contract Escrow is IEscrow, Ownable {
         return productAddress;
     }
 
-    // get total apps quantity
-    function getTotalAppsQuantity() public view returns (uint256) {
-        return maxAppNum;
-    }
-
     // get app owner address
     function getAppOwner(uint256 appId) public view returns (address) {
         return appOwner[appId];
     }
 
+    // get app Interval Dispute timestamp
+    function getAppIntervalDispute(uint256 appId) public view returns(uint256) {
+        return appIntervalDispute[appId];
+    }
+
+    // get app Interval Claim timestamp
+    function getAppIntervalClaim(uint256 appId) public view returns(uint256) {
+        return appIntervalClaim[appId];
+    }
+
+    // get app Interval Refuse timestamp
+    function getAppIntervalRefuse(uint256 appId) public view returns(uint256) {
+        return appIntervalRefuse[appId];
+    }
+
+    // get app URI
+    function getAppURI(uint256 appId) public view returns(string memory) {
+        return appURI[appId];
+    }
+
+    // get app Name
+    function getAppName(uint256 appId) public view returns(string memory) {
+        return appName[appId];
+    }
+
+    // get app Mod Commission
+    function getAppModCommission(uint256 appId) public view returns(uint8) {
+        return appModCommission[appId];
+    }
+
+    // get app Owner Commission
+    function getAppOwnerCommission(uint256 appId) public view returns(uint8) {
+        return appOwnerCommission[appId];
+    }
+
+    // get order ModA Resolution
+    function getModAResolution(uint256 orderId) public view returns(uint8) {
+        return orderModAResolution[orderId];
+    }
+
+    // get order ModB Resolution
+    function getModBResolution(uint256 orderId) public view returns(uint8) {
+        return orderModBResolution[orderId];
+    }
+
     // get user balance
     function getUserBalance(address userAddress, address coinAddress) public view returns(uint256) {
         return userBalance[userAddress][coinAddress];
+    }
+
+    // get order detail
+    function getOrderDetail(uint256 orderId) public view returns(Order memory) {
+        return orderBook[orderId];
+    }
+
+    // get dispute detail
+    function getDisputeDetail(uint256 orderId) public view returns(Dispute memory) {
+        return disputeBook[orderId];
     }
 
     //Create new APP

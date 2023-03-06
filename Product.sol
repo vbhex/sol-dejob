@@ -14,16 +14,16 @@ contract Product is IProduct,ERC721A,Ownable {
     uint256 public maxSupply = 74000000; 
 
     // product's total sold
-    mapping(uint256 => uint256) public prodTotalSold;
+    mapping(uint256 => uint256) private prodTotalSold;
 
     // product's success sold
-    mapping(uint256 => uint256) public prodSuccessSold;
+    mapping(uint256 => uint256) private prodSuccessSold;
 
     // product's success rate
-    mapping(uint256 => uint8) public prodSuccessRate;
+    mapping(uint256 => uint8) private prodSuccessRate;
 
     // product available status
-    mapping(uint256 => bool) public prodIsBlocked;
+    mapping(uint256 => bool) private prodIsBlocked;
 
     // mint event
     event Mint(
@@ -58,6 +58,25 @@ contract Product is IProduct,ERC721A,Ownable {
         return 1;
     }
 
+    // get product total sold
+    function getProdTotalSold(uint256 productId) public view returns(uint256) {
+        return prodTotalSold[productId];
+    }
+
+    // get product success sold
+    function getProdSuccessSold(uint256 productId) public view returns(uint256) {
+        return prodSuccessSold[productId];
+    }
+
+    // get product success sold rate
+    function getProdSuccessRate(uint256 productId) public view returns(uint8) {
+        return prodSuccessRate[productId];
+    }
+
+    // is product blocked
+    function getProdctBlockedStatus(uint256 productId) public view returns(bool) {
+        return prodIsBlocked[productId];
+    }
 
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {

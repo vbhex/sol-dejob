@@ -14,13 +14,13 @@ contract Moderator is IModerator,ERC721A,Ownable {
     uint256 public maxSupply = 140000; 
 
     // mod's total score
-    mapping(uint256 => uint256) public modTotalScore;
+    mapping(uint256 => uint256) private modTotalScore;
 
     // mod's success score
-    mapping(uint256 => uint256) public modSuccessScore;
+    mapping(uint256 => uint256) private modSuccessScore;
 
     // mod's success rate
-    mapping(uint256 => uint8) public modSuccessRate;
+    mapping(uint256 => uint8) private modSuccessRate;
 
     // mint event
     event Mint(
@@ -53,6 +53,21 @@ contract Moderator is IModerator,ERC721A,Ownable {
     // override start index to 1
     function _startTokenId() internal view virtual override returns (uint256) {
         return 1;
+    }
+
+    // get mod total score
+    function getModTotalScore(uint256 modId) public view returns(uint256) {
+        return modTotalScore[modId];
+    }
+
+    // get mod success score
+    function getModSuccessScore(uint256 modId) public view returns(uint256) {
+        return modSuccessScore[modId];
+    }
+
+    // get mod success rate
+    function getModSuccessRate(uint256 modId) public view returns(uint256) {
+        return modSuccessRate[modId];
     }
 
 
