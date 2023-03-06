@@ -47,9 +47,8 @@ contract Moderator is IModerator,ERC721A,Ownable {
 
 
     function contractURI() public pure returns (string memory) {
-        return "https://dejob.io/api/dejobio/v1/contract/info";
+        return "https://dejob.io/api/dejobio/v1/contract/mod";
     }
-
 
 
     // set escrow contract address

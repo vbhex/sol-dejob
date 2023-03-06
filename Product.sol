@@ -50,9 +50,8 @@ contract Product is IProduct,ERC721A,Ownable {
 
 
     function contractURI() public pure returns (string memory) {
-        return "https://dejob.io/api/dejobio/v1/contract/info";
+        return "https://dejob.io/api/dejobio/v1/contract/product";
     }
-
 
 
     // set escrow contract address

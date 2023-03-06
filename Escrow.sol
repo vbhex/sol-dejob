@@ -224,9 +224,9 @@ contract Escrow is IEscrow, Ownable {
         appOwner[appId] = _appOwner;
         appURI[appId] = websiteURI;
         appName[appId] = _appName;
-        appIntervalDispute[appId] = uint256(1000000);
-        appIntervalClaim[appId] = uint256(1000000);
-        appIntervalRefuse[appId] = uint256(86400);
+        appIntervalDispute[appId] = uint256(3000000);// buyer can only dispute in 1 month after order paid.
+        appIntervalClaim[appId] = uint256(3000000);  // seller can claim if buyer does not dispute over 1 month after order paid.
+        appIntervalRefuse[appId] = uint256(259200); // buyer can claim if seller does not refuse dispute over 3 days after dispute .
         appModCommission[appId] = uint8(1);
         appOwnerCommission[appId] = uint8(0);
         maxAppNum = appId;
