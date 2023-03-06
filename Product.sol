@@ -132,8 +132,6 @@ contract Product is IProduct,ERC721A,Ownable {
         if(ifSuccess) {
             // success score add 1
             prodSuccessSold[prodId] = prodSuccessSold[prodId].add(1);
-        } else if(prodSuccessSold[prodId] > 0) {
-            prodSuccessSold[prodId] = prodSuccessSold[prodId].sub(1);
         } else {
             // nothing changed
         }

@@ -105,8 +105,6 @@ contract Moderator is IModerator,ERC721A,Ownable {
         if(ifSuccess) {
             // success score add 1
             modSuccessScore[modId] = modSuccessScore[modId].add(1);
-        } else if(modSuccessScore[modId] > 0) {
-            modSuccessScore[modId] = modSuccessScore[modId].sub(1);
         } else {
             // nothing changed
         }
