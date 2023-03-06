@@ -79,7 +79,7 @@ contract Escrow is IEscrow, Ownable {
     }
 
     // orderId => Order
-    mapping(uint256 => Order) private orderBook;
+    mapping(uint256 => Order) public orderBook;
     //Struct Dispute
     struct Dispute {
         uint256 refund; // refund amount
@@ -89,7 +89,7 @@ contract Escrow is IEscrow, Ownable {
     }
 
     // orderId => Dispute
-    mapping(uint256 => Dispute) private disputeBook;
+    mapping(uint256 => Dispute) public disputeBook;
 
     // user balance (userAddress => mapping(coinAddress => balance))
     mapping(address => mapping(address => uint256)) private userBalance;
@@ -1108,6 +1108,8 @@ contract Escrow is IEscrow, Ownable {
                         100
                     )
                 );
+            // update product sold record
+            productContract.updateProdScore(orderBook[orderId].productId, true);
             emit UserBalanceChanged(
                 orderBook[orderId].seller,
                 true,
@@ -1133,6 +1135,8 @@ contract Escrow is IEscrow, Ownable {
             userBalance[orderBook[orderId].buyer][orderBook[orderId].coinAddress] = 
             userBalance[orderBook[orderId].buyer][orderBook[orderId].coinAddress].add(
                     disputeBook[orderId].refund.mul(100 - finalCommission).div(100));
+            // update product sold record
+            productContract.updateProdScore(orderBook[orderId].productId, false);
             emit UserBalanceChanged(
                 orderBook[orderId].buyer,
                 true,
@@ -1154,6 +1158,7 @@ contract Escrow is IEscrow, Ownable {
                             )
                         ).mul(100 - finalCommission).div(100)
                     );
+                    
                 emit UserBalanceChanged(
                     orderBook[orderId].seller,
                     true,
