@@ -73,11 +73,6 @@ contract Product is IProduct,ERC721A,Ownable {
         return prodSuccessRate[productId];
     }
 
-    // is product blocked
-    function getProdctBlockedStatus(uint256 productId) public view returns(bool) {
-        return prodIsBlocked[productId];
-    }
-
     // set escrow contract address
     function setEscrow(address payable _escrow) public onlyOwner {
         IEscrow EscrowContract = IEscrow(_escrow);
